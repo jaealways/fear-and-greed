@@ -1,11 +1,12 @@
 import math
 import pandas as pd
 import numpy as np
+from scipy import stats
 
 from calculation import VariableCalculation as vc
 
 
-class VolatilityVolume(object):
+class Score(object):
     def __init__(self, X, Y):
         """
         Parameters
@@ -13,12 +14,10 @@ class VolatilityVolume(object):
         X: list(array), shape = [m, (n, t)], dtype=object
             Price time series
         """
-        nan_x, nan_y = vc().index_nan(X, Y)
         self.X, self.Y = X.astype(np.float64), Y.astype(np.float64)
-        np.nan_to_num(self.X, copy=False), np.nan_to_num(self.Y, copy=False)
+        self.Y = np.maximum(self.Y, 0.00000001)
 
-
-    def compute_volatility(self):
+    def volatility_score(self):
         """
         Compute volatility score
         Returns
@@ -26,44 +25,44 @@ class VolatilityVolume(object):
         D: array, shape = [m, (n, t)]
             Distance matrix.
         """
-        rp = vc().return_time_series(self.X)
-        vp = vc().variance_price(rp)
-        log_mu, log_std = vc().log_vp(vp)
+        rp = vc().get_return_time_series(self.X)
+        vp = vc().get_variance_price(rp)
+        log_mu, log_std = vc().get_log_vp(vp)
+        log_std = np.maximum(log_std, 0.00000001)
         m, n = log_mu.shape
 
         score_volatility = np.zeros((m, n))
 
         for idx in range(n):
-            ln_sigma = np.ma.masked_invalid(np.log(vp[:, -n+idx]))
-            ln_sigma = np.nan_to_num(ln_sigma, copy=True, posinf=0, neginf=0, nan=0)
+            ln_sigma = np.log(np.sqrt(vp[:, -n+idx]))
             val_max = np.true_divide((ln_sigma-log_mu[:,idx].reshape(-1)), log_std[:,idx].reshape(-1)).reshape(-1,1)
-            array_max = np.max(np.concatenate((np.full(val_max.shape, -4), val_max), axis=1), axis=1).reshape(-1,1)
-            val_min = np.concatenate((np.full(array_max.shape, 4), array_max), axis=1)
-            score_volatility[:, idx] = np.min(val_min, axis=1).reshape(-1)
+            array_max = vc().get_minmax(val_max, -4, "max")
+            score_volatility[:, idx] = vc().get_minmax(array_max, 4, "min")
 
         return score_volatility
 
-    def compute_volume(self):
+    def ewm_volume(self, dur_l=60, dur_s=20):
+        ewm_vlm_l = vc().get_ewm_time_series(X=self.Y, alpha=1-1/dur_l)
+        ewm_vlm_s = vc().get_ewm_time_series(X=self.Y, alpha=1-1/dur_s)
+        return ewm_vlm_l, ewm_vlm_s
+
+    def volume_score(self, ewm_vlm_l, ewm_vlm_s):
         """
         Compute volume score
         """
-        ewm_vlm_s, ewm_vlm_l = vc().ewm_time_series(self.Y, 1-1/20), vc().ewm_time_series(self.Y, 1-1/60)
         ln_vlm_s = np.log(np.true_divide(self.Y, ewm_vlm_s))
         ln_vlm_l = np.log(np.true_divide(self.Y, ewm_vlm_l))
-        ln_vlm_s = np.nan_to_num(ln_vlm_s, copy=True, posinf=0, neginf=0, nan=0)
-        ln_vlm_l = np.nan_to_num(ln_vlm_l, copy=True, posinf=0, neginf=0, nan=0)
 
         score_volume = np.zeros(ewm_vlm_s.shape)
 
         val_max = np.true_divide((ln_vlm_s + ln_vlm_l), 2)
         for idx in range(ewm_vlm_s.shape[1]):
-            array_max = np.max(np.concatenate((np.full((val_max.shape[0], 1), -4), val_max[:,idx].reshape(-1,1)), axis=1), axis=1).reshape(-1,1)
-            val_min = np.concatenate((np.full(array_max.shape, 4), array_max), axis=1)
-            score_volume[:,idx] = np.min(val_min, axis=1)
+            array_max = vc().get_minmax(val_max[:, idx], -4, "max")
+            score_volume[:,idx] = vc().get_minmax(array_max, 4, "min")
 
         return score_volume
 
-    def compute_volatility_volume(self):
+    def volatility_volume_score(self, score_volatility, score_volume):
         """
         Compute volatility volume score
         Returns
@@ -71,72 +70,112 @@ class VolatilityVolume(object):
         D: array, shape = [m, (n, t)]
             Distance matrix.
         """
-        s_volatility, s_volume = self.compute_volatility(), self.compute_volume()
-        s_volume = s_volume[:, -s_volatility.shape[1]:]
-        score_vv = np.zeros(s_volume.shape)
+        score_volume = score_volume[:, -score_volatility.shape[1]:]
+        score_vv = np.zeros(score_volume.shape)
 
-        for idx in range(s_volatility.shape[1]):
-            val_max = s_volatility + s_volume
-            array_max = np.max(
-                np.concatenate((np.full((val_max.shape[0], 1), -4), val_max[:, idx].reshape(-1, 1)), axis=1),
-                axis=1).reshape(-1, 1)
-            val_min = np.concatenate((np.full(array_max.shape, 4), array_max), axis=1)
-            score_vv[:, idx] = np.min(val_min, axis=1)/8 + 0.5
+        for idx in range(score_volatility.shape[1]):
+            val_max = score_volatility + score_volume
+            array_max = vc().get_minmax(val_max[:, idx], -4, "max")
+            score_vv[:, idx] = vc().get_minmax(array_max, 4, "min")/8 + 0.5
 
         return score_vv
 
-class Momentum(object):
-    def __init__(self, X, Y):
-        """
-        Parameters
-        ----------
-        X: array, shape = [m, (n, t)]
-            Price time series
-        Y: array, shape = [m, (n, t)]
-            Volume time series.
-        """
-        nan_x, nan_y = vc().index_nan(X, Y)
-        self.X, self.Y = X.astype(np.float64), Y.astype(np.float64)
-        np.nan_to_num(self.X, copy=False), np.nan_to_num(self.Y, copy=False)
+    def weight_long_short(self, score_vv):
+        l_l, l_s = vc().get_weight_vv_long_short(score_vv)
+        return l_l, l_s
 
-    def compute_momentum(self):
-        score_vv = VolatilityVolume(self.X, self.Y).compute_volatility_volume()
-        alpha = 9*score_vv + 1
-        l_s, l_l = alpha, 10-alpha
-
-        ewm_p_l, ewm_p_s = vc().ewm_time_series(self.X, 1-1/30), vc().ewm_time_series(self.X, 1-1/7)
-        x_l, x_s = np.true_divide(self.X-ewm_p_s, ewm_p_s), np.true_divide(self.X-ewm_p_s, ewm_p_s)
-        x_l = np.nan_to_num(x_l, copy=True, posinf=0, neginf=0, nan=0)
-        x_s = np.nan_to_num(x_s, copy=True, posinf=0, neginf=0, nan=0)
-
+    def disparity(self, l_l, l_s, dur_s=7, dur_l=30):
+        x_l, x_s = vc().get_disparity(self.X, 1-1/dur_l), vc().get_disparity(self.X, 1-1/dur_s)
         x_l, x_s = x_l[:, -l_l.shape[1]:], x_s[:, -l_s.shape[1]:]
 
-        c = 400
-        s_momentum = c*(np.multiply(l_s, x_s)+np.multiply(l_l, x_l))/10
+        return x_l, x_s
 
-        return s_momentum, score_vv
+    def score_momentum(self, x_l, x_s, l_l, l_s, c=200):
+        score_momentum = c*(np.multiply(l_s, x_s)+np.multiply(l_l, x_l))/10
 
-    def compute_compensation(self):
-        s_momentum, score_vv = self.compute_momentum()
-        ewm_w_s, ewm_w_l = vc().ewm_time_series(s_momentum, 1-1/2), vc().ewm_time_series(s_momentum, 1-1/7)
+        return score_momentum
+
+    def ewm_score_momentum(self, score_momentum, dur_s=2, dur_l=7):
+        ewm_w_s, ewm_w_l = vc().get_ewm_time_series(score_momentum, 1-1/dur_s), vc().get_ewm_time_series(score_momentum, 1-1/dur_l)
         ewm_w = (ewm_w_s + ewm_w_l)/2
 
+        return ewm_w
+
+    def beta_compensated(self, ewm_w):
         beta = 2 + np.absolute(ewm_w) - 4/(1+np.exp(np.absolute(-ewm_w)))
 
         list_ewm_w_neg = list(np.where(ewm_w < 0))
         idx_ewm_w_neg = tuple(zip(*list_ewm_w_neg))
 
+        # 어디선가 음수값도 양수로 바뀜, 0 변환해주면서
         beta_com = beta.copy()
 
         for idx in idx_ewm_w_neg:
             beta_com[idx] = -beta[idx]
 
-        s_momentum_com = s_momentum - beta_com
+        return beta_com
 
-        s_fng = 1/(1+np.exp(-(np.multiply(score_vv, s_momentum_com) )))
+    def score_compensation(self, score_momentum, score_vv, beta_com):
+        s_momentum_com = score_momentum - beta_com
+        score_fng = 1/(1+np.exp(-(np.multiply(score_vv, s_momentum_com))))
 
-        return s_fng
+        return score_fng
 
 
+class FearGreed(object):
+    def __init__(self, X, Y, score):
+        """
+        Parameters
+        ----------
+        X: list(array), shape = [m, (n, t)], dtype=object
+            Price time series
 
+        조절가능한 변수?
+        변동성 점수: 과거 365일 가중평균, 람다 0.94?
+        거래량 점수: 단기, 장기 20일, 60일
+        모멘텀 점수: 장단기 가중시 변수 9, 이격도 장기 단기 30일, 7일, 파라미터 C
+        공포탐욕 점수: 모멘텀 W 장기, 단기 7일, 2일
+        """
+        self.X, self.Y = X.astype(np.float64), Y.astype(np.float64)
+        self.Y[self.Y == 0] = 0.00000001
+
+
+        self.score = score
+
+    def compute(self):
+        """"""
+        score_volitality = self.score.volatility_score()
+        ewm_vlm_l, ewm_vlm_s = self.score.ewm_volume()
+        score_volume = self.score.volume_score(ewm_vlm_l, ewm_vlm_s)
+        score_vv = self.score.volatility_volume_score(score_volitality, score_volume)
+
+        l_l, l_s = self.score.weight_long_short(score_vv)
+        x_l, x_s = self.score.disparity(l_l, l_s)
+
+        score_momentum = self.score.score_momentum(x_l, x_s, l_l, l_s)
+        ewm_w = self.score.ewm_score_momentum(score_momentum)
+        beta_com = self.score.beta_compensated(ewm_w)
+        score_compensation = self.score.score_compensation(score_momentum, score_vv, beta_com)
+
+        return score_compensation
+
+    def compute_grad(self):
+        """"""
+        score_volatility = self.score.volatility_score()
+        ewm_vlm_l, ewm_vlm_s = self.score.ewm_volume()
+        score_volume = self.score.volume_score(ewm_vlm_l, ewm_vlm_s)
+        score_vv = self.score.volatility_volume_score(score_volatility, score_volume)
+
+        l_l, l_s = self.score.weight_long_short(score_vv)
+        x_l, x_s = self.score.disparity(l_l, l_s)
+
+
+        score_momentum = self.score.score_momentum(x_l, x_s, l_l, l_s)
+        ewm_w = self.score.ewm_score_momentum(score_momentum)
+        beta_com = self.score.beta_compensated(ewm_w)
+        score_compensation = self.score.score_compensation(score_momentum, score_vv, beta_com)
+
+        p_val = stats.shapiro(score_compensation).pvalue
+
+        return score_compensation
 
