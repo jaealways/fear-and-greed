@@ -15,7 +15,7 @@ class VariableCalculation:
         -------
         G: array, shape = [m, t-1]
         """
-        rp = np.true_divide(np.diff(X), X[:, 1:])
+        rp = np.true_divide(np.diff(X), X[:, 1:]) * 100
         rp[rp == 0] = 0.00000001
 
         return rp
@@ -74,7 +74,7 @@ class VariableCalculation:
     def get_disparity(self, X, alpha):
         """이격도"""
         ewm_X = self.get_ewm_time_series(X, alpha)
-        x_X = np.true_divide(X-ewm_X, ewm_X)
+        x_X = np.true_divide(X-ewm_X, ewm_X) * 100
 
         return x_X
 
