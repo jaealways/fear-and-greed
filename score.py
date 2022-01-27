@@ -17,7 +17,7 @@ class Score(object):
         self.X, self.Y = X.astype(np.float64), Y.astype(np.float64)
         self.Y = np.maximum(self.Y, 0.00000001)
 
-    def volatility_score(self):
+    def volatility_score(self, duration):
         """
         Compute volatility score
         Returns
@@ -27,7 +27,7 @@ class Score(object):
         """
         rp = vc().get_return_time_series(self.X)
         vp = vc().get_variance_price(rp)
-        log_mu, log_std = vc().get_log_vp(vp)
+        log_mu, log_std = vc().get_log_vp(vp, duration=duration)
         log_std = np.maximum(log_std, 0.00000001)
         m, n = log_mu.shape
 
@@ -90,8 +90,8 @@ class Score(object):
 
         return x_l, x_s
 
-    def score_momentum(self, x_l, x_s, l_l, l_s, c=200):
-        score_momentum = c*(np.multiply(l_s, x_s)+np.multiply(l_l, x_l))/10
+    def score_momentum(self, x_l, x_s, l_l, l_s, c=100):
+        score_momentum = c*(np.multiply(x_l, l_l)+np.multiply(x_s, l_s))/10
 
         return score_momentum
 
@@ -117,7 +117,7 @@ class Score(object):
 
     def score_compensation(self, score_momentum, score_vv, beta_com):
         s_momentum_com = score_momentum - beta_com
-        score_fng = 1/(1+np.exp(-(np.multiply(score_vv, s_momentum_com))))
+        score_fng = 1/(1+np.exp(-(np.multiply(score_vv, s_momentum_com)))) * 100
 
         return score_fng
 
@@ -144,7 +144,7 @@ class FearGreed(object):
 
     def compute(self):
         """"""
-        score_volitality = self.score.volatility_score()
+        score_volitality = self.score.volatility_score(duration=120)
         ewm_vlm_l, ewm_vlm_s = self.score.ewm_volume()
         score_volume = self.score.volume_score(ewm_vlm_l, ewm_vlm_s)
         score_vv = self.score.volatility_volume_score(score_volitality, score_volume)
@@ -161,7 +161,7 @@ class FearGreed(object):
 
     def compute_grad(self):
         """"""
-        score_volatility = self.score.volatility_score()
+        score_volatility = self.score.volatility_score(duration=120)
         ewm_vlm_l, ewm_vlm_s = self.score.ewm_volume()
         score_volume = self.score.volume_score(ewm_vlm_l, ewm_vlm_s)
         score_vv = self.score.volatility_volume_score(score_volatility, score_volume)
@@ -169,13 +169,43 @@ class FearGreed(object):
         l_l, l_s = self.score.weight_long_short(score_vv)
         x_l, x_s = self.score.disparity(l_l, l_s)
 
+        score_fng = np.full(score_vv.shape, np.nan)
+
+        for idx, val in enumerate(zip(x_l, x_s, l_l, l_s)):
+            p_val, c = 0, 100000
+            while p_val <= 0.05:
+                score_momentum = self.score.score_momentum(val[0], val[1], val[2], val[3], c=c).reshape(-1, 1)
+                ewm_w = self.score.ewm_score_momentum(score_momentum)
+                beta_com = self.score.beta_compensated(ewm_w)
+                score_compensation = self.score.score_compensation(score_momentum, score_vv[idx].reshape(-1, 1), beta_com)
+                score_comp_droped = score_compensation[~np.isnan(score_compensation)].tolist()
+
+                p_val = stats.shapiro(score_comp_droped).pvalue
+                err = 0.05 - p_val
+                c += err*100000
+                print(idx, p_val, c)
+
+            score_fng[:, idx] = score_compensation
+
+        return score_fng
+
+    def plot(self):
+        """"""
+        score_volitality = self.score.volatility_score(duration=120)
+        ewm_vlm_l, ewm_vlm_s = self.score.ewm_volume()
+        score_volume = self.score.volume_score(ewm_vlm_l, ewm_vlm_s)
+        score_vv = self.score.volatility_volume_score(score_volitality, score_volume)
+
+        l_l, l_s = self.score.weight_long_short(score_vv)
+        x_l, x_s = self.score.disparity(l_l, l_s)
 
         score_momentum = self.score.score_momentum(x_l, x_s, l_l, l_s)
         ewm_w = self.score.ewm_score_momentum(score_momentum)
         beta_com = self.score.beta_compensated(ewm_w)
         score_compensation = self.score.score_compensation(score_momentum, score_vv, beta_com)
 
-        p_val = stats.shapiro(score_compensation).pvalue
-
         return score_compensation
 
+
+# 왜 이격도 첫 시작값 다 같나?
+# score_comp 중간에 nan??
