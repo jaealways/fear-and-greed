@@ -15,7 +15,7 @@ class Score(object):
             Price time series
         """
         self.X, self.Y = X.astype(np.float64), Y.astype(np.float64)
-        self.Y = np.maximum(self.Y, 0.00000001)
+        self.Y[self.Y == 0] = 0.00000001
 
     def volatility_score(self, duration):
         """
@@ -28,7 +28,7 @@ class Score(object):
         rp = vc().get_return_time_series(self.X)
         vp = vc().get_variance_price(rp)
         log_mu, log_std = vc().get_log_vp(vp, duration=duration)
-        log_std = np.maximum(log_std, 0.00000001)
+        log_std[log_std == 0] = 0.00000001
         m, n = log_mu.shape
 
         score_volatility = np.zeros((m, n))
@@ -90,7 +90,7 @@ class Score(object):
 
         return x_l, x_s
 
-    def score_momentum(self, x_l, x_s, l_l, l_s, c=100):
+    def score_momentum(self, x_l, x_s, l_l, l_s, c=15):
         score_momentum = c*(np.multiply(x_l, l_l)+np.multiply(x_s, l_s))/10
 
         return score_momentum
@@ -139,15 +139,14 @@ class FearGreed(object):
         self.X, self.Y = X.astype(np.float64), Y.astype(np.float64)
         self.Y[self.Y == 0] = 0.00000001
 
-
         self.score = score
 
     def compute(self):
         """"""
-        score_volitality = self.score.volatility_score(duration=120)
+        score_volatility = self.score.volatility_score(duration=120)
         ewm_vlm_l, ewm_vlm_s = self.score.ewm_volume()
         score_volume = self.score.volume_score(ewm_vlm_l, ewm_vlm_s)
-        score_vv = self.score.volatility_volume_score(score_volitality, score_volume)
+        score_vv = self.score.volatility_volume_score(score_volatility, score_volume)
 
         l_l, l_s = self.score.weight_long_short(score_vv)
         x_l, x_s = self.score.disparity(l_l, l_s)
@@ -188,23 +187,6 @@ class FearGreed(object):
             score_fng[:, idx] = score_compensation
 
         return score_fng
-
-    def plot(self):
-        """"""
-        score_volitality = self.score.volatility_score(duration=120)
-        ewm_vlm_l, ewm_vlm_s = self.score.ewm_volume()
-        score_volume = self.score.volume_score(ewm_vlm_l, ewm_vlm_s)
-        score_vv = self.score.volatility_volume_score(score_volitality, score_volume)
-
-        l_l, l_s = self.score.weight_long_short(score_vv)
-        x_l, x_s = self.score.disparity(l_l, l_s)
-
-        score_momentum = self.score.score_momentum(x_l, x_s, l_l, l_s)
-        ewm_w = self.score.ewm_score_momentum(score_momentum)
-        beta_com = self.score.beta_compensated(ewm_w)
-        score_compensation = self.score.score_compensation(score_momentum, score_vv, beta_com)
-
-        return score_compensation
 
 
 # 왜 이격도 첫 시작값 다 같나?
