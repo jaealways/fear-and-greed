@@ -6,23 +6,10 @@ from .calculation import VariableCalculation as vc
 
 class Score(object):
     def __init__(self, X, Y):
-        """
-        Parameters
-        ----------
-        X: list(array), shape = [m, (n, t)], dtype=object
-            Price time series
-        """
         self.X, self.Y = X.astype(np.float64), Y.astype(np.float64)
         self.Y[self.Y == 0] = 0.00000001
 
     def volatility_score(self, duration):
-        """
-        Compute volatility score
-        Returns
-        -------
-        D: array, shape = [m, (n, t)]
-            Distance matrix.
-        """
         rp = vc().get_return_time_series(self.X)
         vp = vc().get_variance_price(rp)
         log_mu, log_std = vc().get_log_vp(vp, duration=duration)
@@ -45,9 +32,6 @@ class Score(object):
         return ewm_vlm_l, ewm_vlm_s
 
     def volume_score(self, ewm_vlm_l, ewm_vlm_s):
-        """
-        Compute volume score
-        """
         ln_vlm_s = np.log(np.true_divide(self.Y, ewm_vlm_s))
         ln_vlm_l = np.log(np.true_divide(self.Y, ewm_vlm_l))
 
@@ -61,13 +45,6 @@ class Score(object):
         return score_volume
 
     def volatility_volume_score(self, score_volatility, score_volume):
-        """
-        Compute volatility volume score
-        Returns
-        -------
-        D: array, shape = [m, (n, t)]
-            Distance matrix.
-        """
         score_volume = score_volume[:, -score_volatility.shape[1]:]
         score_vv = np.zeros(score_volume.shape)
 
