@@ -1,9 +1,6 @@
 import numpy as np
 
 class VariableCalculation:
-    # def __init__(self, X):
-    #     self.X = X
-
     def get_return_time_series(self, X):
         """
         Parameters
