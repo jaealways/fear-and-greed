@@ -1,6 +1,5 @@
 import numpy as np
 
-
 class VariableCalculation:
     def get_return_time_series(self, X):
         """
