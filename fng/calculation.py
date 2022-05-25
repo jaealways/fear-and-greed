@@ -42,7 +42,6 @@ class VariableCalculation:
         """
 
     def get_variance_price(self, rp):
-        """start with date 0 vp는 rp 보다 1 시계열 큼"""
         lam = 0.94
         rp = np.nan_to_num(rp, copy=True, nan=0)
         vp = np.zeros((rp.shape[0], rp.shape[1]+1))
@@ -69,7 +68,6 @@ class VariableCalculation:
         return log_mu, log_std
 
     def get_disparity(self, X, alpha):
-        """이격도"""
         ewm_X = self.get_ewm_time_series(X, alpha)
         x_X = np.true_divide(X-ewm_X, ewm_X) * 100
 
@@ -82,7 +80,6 @@ class VariableCalculation:
         return l_l, l_s
 
     def get_minmax(self, X, thd, method='min'):
-        """method: min or max"""
         X = X.reshape((-1, 1))
         if method=="min":
             min_array = np.full(X.shape, thd)
@@ -92,9 +89,3 @@ class VariableCalculation:
             array = np.max(np.concatenate((max_array, X), axis=1), axis=1)
 
         return array
-
-
-
-
-    # 이격도, min max 함수, 정규식으로 c 변환, log 등에서 0 어떻게 처리?, 기간에 맞는 결측치 채우기
-
