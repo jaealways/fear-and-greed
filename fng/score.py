@@ -1,7 +1,7 @@
 import numpy as np
 from scipy import stats
 
-from calculation import VariableCalculation as vc
+from .calculation import VariableCalculation as vc
 
 
 class scoreIndex(object):
