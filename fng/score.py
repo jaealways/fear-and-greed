@@ -211,9 +211,6 @@ class scoreStock(object):
 
 class FearGreed(object):
     def __init__(self, score):
-        # self.X, self.Y = X.astype(np.float64), Y.astype(np.float64)
-        # self.Y[self.Y == 0] = 0.00000001
-
         self.score = score
 
     def compute_index(self, duration=120):
@@ -245,25 +242,14 @@ class FearGreed(object):
         l_l, l_s = self.score.weight_long_short(score_vv)
         x_l, x_s = self.score.disparity(l_l, l_s)
 
-        score_fng = np.full(score_vv.shape, np.nan)
+        score_c = self.score.score_c(duration=duration)
 
-        for idx, val in enumerate(zip(x_l, x_s, l_l, l_s)):
-            p_val, c = 0, 100000
-            while p_val <= 0.05:
-                score_momentum = self.score.score_momentum(val[0], val[1], val[2], val[3], c=c).reshape(-1, 1)
-                ewm_w = self.score.ewm_score_momentum(score_momentum)
-                beta_com = self.score.beta_compensated(ewm_w)
-                score_compensation = self.score.score_compensation(score_momentum, score_vv[idx].reshape(-1, 1), beta_com)
-                score_comp_droped = score_compensation[~np.isnan(score_compensation)].tolist()
+        score_momentum = self.score.score_momentum(x_l, x_s, l_l, l_s, c=score_c[:, 1:])
+        ewm_w = self.score.ewm_score_momentum(score_momentum)
+        beta_com = self.score.beta_compensated(ewm_w)
+        score_compensation = self.score.score_compensation(score_momentum, score_vv, beta_com)
 
-                p_val = stats.shapiro(score_comp_droped).pvalue
-                err = 0.05 - p_val
-                c += err*100000
-                print(idx, p_val, c)
-
-            score_fng[:, idx] = score_compensation
-
-        return score_fng
+        return score_compensation
 
 
 # 왜 이격도 첫 시작값 다 같나?
