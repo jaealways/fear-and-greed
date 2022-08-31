@@ -6,6 +6,8 @@ from .calculation import VariableCalculation as vc
 
 class scoreIndex(object):
     def __init__(self, X, Y):
+        #log0 값 몇으로 치환??
+
         self.X, self.Y = X.astype(np.float64), Y.astype(np.float64)
         self.Y[self.Y == 0] = 0.1
 
@@ -83,6 +85,12 @@ class scoreIndex(object):
         std_price_all = np.zeros((self.X.shape[0], self.X.shape[1]-duration))
         std_volume_all = np.zeros((self.X.shape[0], self.X.shape[1] - duration))
 
+        # 핵심은 시그마와 가격변수의 분포에 따라 C 파라미터의 값 다르게 도출하기
+        # 시그마가 시계열의 양극단 값으로 몰릴수록(즉 유동성이 너무 적거나 가격 변화량 자체가 너무 큰 경우
+        # C 파라미터가 변동성을 더 잘 경고해줘야 함. C를 20내외로 설정)
+        # 그 외에 변동성이 거의 없는 경우 5 내외의 파라미터를 설정
+        # 시그마의 움직임에 따라(단 평균이 높으면 시그마가 높으니 정규화과정이 필요) 측정가능한 메트릭 개발하기
+
         for i in range(self.X.shape[1]-duration):
             std_price = np.nanstd(self.X[:, i:i+duration], axis=1)/np.nanmean(self.X[:, i:i+duration])
             std_volume = np.nanstd(self.Y[:, i:i+duration], axis=1)/np.nanmean(self.Y[:, i:i+duration])
@@ -100,7 +108,6 @@ class scoreIndex(object):
         list_ewm_w_neg = list(np.where(ewm_w < 0))
         idx_ewm_w_neg = tuple(zip(*list_ewm_w_neg))
 
-        # 어디선가 음수값도 양수로 바뀜, 0 변환해주면서
         beta_com = beta.copy()
 
         for idx in idx_ewm_w_neg:
@@ -117,6 +124,9 @@ class scoreIndex(object):
 
 class scoreStock(object):
     def __init__(self, A, B, C, Y):
+        # scoreIndex와의 차이
+        # 개별종목은 유동성 부족으로 시가, 종가까지 고려
+        # 거래량, 모멘텀은 지수와 동일, 변동성 점수 계산시 시가와 종가의 위치 고려
         self.A, self.B, self.C, self.Y = A.astype(np.float64), B.astype(np.float64), C.astype(np.float64), Y.astype(np.float64)
         self.Y[self.Y == 0] = 0.1
 
@@ -143,6 +153,7 @@ class scoreStock(object):
         return ewm_vlm_l, ewm_vlm_s
 
     def volume_score(self, ewm_vlm_l, ewm_vlm_s):
+        # 거래량 점수 뒤에 왜 penalty 구간???
         ln_vlm_s = np.log(np.true_divide(self.Y, ewm_vlm_s)) + 1/(500*self.Y)
         ln_vlm_l = np.log(np.true_divide(self.Y, ewm_vlm_l)) + 1/(500*self.Y)
 
@@ -188,12 +199,13 @@ class scoreStock(object):
         return ewm_w
 
     def beta_compensated(self, ewm_w):
+        # 보정함수는 극단값 잡기 위함. MCPI 지수에 맞는 metric 적용
         beta = 2 + np.absolute(ewm_w) - 4/(1+np.exp(np.absolute(-ewm_w)))
 
+        # 왜 list 사용???
         list_ewm_w_neg = list(np.where(ewm_w < 0))
         idx_ewm_w_neg = tuple(zip(*list_ewm_w_neg))
 
-        # 어디선가 음수값도 양수로 바뀜, 0 변환해주면서
         beta_com = beta.copy()
 
         for idx in idx_ewm_w_neg:
@@ -251,6 +263,3 @@ class FearGreed(object):
 
         return score_compensation
 
-
-# 왜 이격도 첫 시작값 다 같나?
-# score_comp 중간에 nan??
