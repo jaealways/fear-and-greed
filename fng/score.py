@@ -82,25 +82,13 @@ class scoreIndex(object):
 
     def score_c(self, duration):
         score_c = np.zeros((self.X.shape[0], self.X.shape[1]-duration))
-        std_price_all = np.zeros((self.X.shape[0], self.X.shape[1]-duration))
-        std_volume_all = np.zeros((self.X.shape[0], self.X.shape[1] - duration))
-
-        # 핵심은 시그마와 가격변수의 분포에 따라 C 파라미터의 값 다르게 도출하기
-        # 시그마가 시계열의 양극단 값으로 몰릴수록(즉 유동성이 너무 적거나 가격 변화량 자체가 너무 큰 경우
-        # C 파라미터가 변동성을 더 잘 경고해줘야 함. C를 20내외로 설정)
-        # 그 외에 변동성이 거의 없는 경우 5 내외의 파라미터를 설정
-        # 시그마의 움직임에 따라(단 평균이 높으면 시그마가 높으니 정규화과정이 필요) 측정가능한 메트릭 개발하기
-        # 자산의 움직임을 가우시안 분포로 가정할 수 있는가
-        # riskmetric은 시그마 기반으로 측정해야함, 왜도 첨도 개념 응용하기
 
         for i in range(self.X.shape[1]-duration):
             std_price = np.nanstd(self.X[:, i:i+duration], axis=1)/np.nanmean(self.X[:, i:i+duration])
             std_volume = np.nanstd(self.Y[:, i:i+duration], axis=1)/np.nanmean(self.Y[:, i:i+duration])
-            std_price_all[:, i] = np.nanstd(self.X[:, i:i+duration], axis=1)
-            std_volume_all[:, i] = np.nanstd(self.Y[:, i:i+duration], axis=1)
-            score_c[:, i] = (std_price * std_volume).T
+            score_c[:, i] = ((std_price + std_volume)/2).T
         score_c[score_c == 0] = 0.01
-        score_c_comp = 10 * np.log(score_c+2)
+        score_c_comp = 5+15/(np.exp(1/score_c-2)+1)
 
         return score_c_comp
 
