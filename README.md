@@ -1,13 +1,48 @@
 # 공포탐욕지수
 
 
-두나무 데이터 벨류팀에서 만든 공포탐욕지수를 비교적 유동성이 적은 자산에 적용하기 위해 개선한 모델입니다.
+두나무 Datavalue 팀에서 만든 공포탐욕지수를 비교적 유동성이 적은 자산에 적용하기 위해 개선한 모델입니다.
+자세한 내용은 [다음 아티클](https://jaealways.tistory.com/100?category=977505)을 참고하시기 바랍니다.
+
+
+## Requirements
+* python (version 3.8 이상)
+
+
+## Example
+
+```python
+pip install git+https://github.com/jaealways/fear-and-greed.git
+```
+터미널에서 위 코드를 실행해서 라이브러리를 다운받습니다.
 
 
 
+```python
+from fng.score import Score, FearGreed
+
+x, y = df_price.to_numpy(), df_price_volume.to_numpy()
+score = scoreIndex(x, y)
+score_fng = FearGreed(score).compute_index(duration=duration)
+```
+x(가격데이터), y(거래량데이터)는 여러 개의 시계열데이터로 to_numpy 변환을 권장합니다. 이 때 column이 시간축이 되도록 합니다.
+
+
+```python
+import matplotlib.pyplot as plt
+
+fig, axs = plt.subplots(3)
+axs[0].plot(x[num, -score_fng.shape[1]:])
+axs[1].plot(y[num, -score_fng.shape[1]:])
+axs[2].plot(score_fng[num, :])
+```
+
+![Figure_1](https://user-images.githubusercontent.com/71856506/197672082-cb628989-03ee-405d-a14e-8735b42fbc0d.png)
+
+이와 같이 가격, 거래량, 공포탐욕점수 시계열을 비교할 수 있습니다.
 
 
 
-## Refrence
+## Reference
 
-https://datavalue.dunamu.com/static/pdf/%EB%91%90%EB%82%98%EB%AC%B4%20%EB%94%94%EC%A7%80%ED%84%B8%EC%9E%90%EC%82%B0%20%EA%B3%B5%ED%8F%AC-%ED%83%90%EC%9A%95%20%EC%A7%80%EC%88%98%20Methodology%20Book%202.0.pdf
+[디지털자산 공포-탐욕 지수 Methodology Book version 2.0](https://datavalue.dunamu.com/static/pdf/%EB%91%90%EB%82%98%EB%AC%B4%20%EB%94%94%EC%A7%80%ED%84%B8%EC%9E%90%EC%82%B0%20%EA%B3%B5%ED%8F%AC-%ED%83%90%EC%9A%95%20%EC%A7%80%EC%88%98%20Methodology%20Book%202.0.pdf)
