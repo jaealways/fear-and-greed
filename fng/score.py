@@ -388,6 +388,27 @@ class scoreStock(object):
 
         return beta_com
 
+    def score_c(self, duration):
+        """
+        Parameters
+        ----------
+        X: time-series data of price with m variables and t times
+
+        Returns
+        -------
+        rp: return of X with m variables and t-1 times
+        """
+        score_c = np.zeros((self.A.shape[0], self.A.shape[1]-duration))
+
+        for i in range(self.A.shape[1]-duration):
+            std_price = np.nanstd(self.A[:, i:i+duration], axis=1)/np.nanmean(self.A[:, i:i+duration])
+            std_volume = np.nanstd(self.Y[:, i:i+duration], axis=1)/np.nanmean(self.Y[:, i:i+duration])
+            score_c[:, i] = ((std_price + std_volume)/2).T
+        score_c[score_c == 0] = 0.01
+        score_c_comp = 5+15/(np.exp(1/score_c-2)+1)
+
+        return score_c_comp
+
     def score_compensation(self, score_momentum, score_vv, beta_com):
         """
         Parameters
