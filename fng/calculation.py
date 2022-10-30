@@ -5,12 +5,11 @@ class VariableCalculation:
         """
         Parameters
         ----------
-        X: array, shape = [m, t]
-            Price time series
+        X: time-series data of price with m variables and t times
 
         Returns
         -------
-        G: array, shape = [m, t-1]
+        rp: return of X with m variables and t-1 times
         """
         rp = np.true_divide(np.diff(X), X[:, 1:]) * 100
         rp[rp == 0] = 0.00000001
@@ -21,8 +20,12 @@ class VariableCalculation:
         """
         Parameters
         ----------
-        X: list(array), shape = [m, (n, t)], dtype=object
-            Price time series
+        X: time-series data of price with m variables and t times
+        alpha: parameter determines the duration of past dates in exponential weighted moving average
+
+        Returns
+        -------
+        ewm: exponential weighted moving average of X with m variables and t-1 times
         """
         ewm = np.zeros((X.shape[0], X.shape[1]+1))
         X = np.nan_to_num(X, copy=True, nan=0)
@@ -33,15 +36,16 @@ class VariableCalculation:
 
         return ewm[:, 1:]
 
-    def get_std_time_series(self, X):
+    def get_variance_price(self, rp):
         """
         Parameters
         ----------
-        X: list(array), shape = [m, (n, t)], dtype=object
-            Price time series
-        """
+        rp: return of price X data of price with m variables and t-1 times
 
-    def get_variance_price(self, rp):
+        Returns
+        -------
+        vp: variance of price return rp with m variables and t-1 times
+        """
         lam = 0.94
         rp = np.nan_to_num(rp, copy=True, nan=0)
         vp = np.zeros((rp.shape[0], rp.shape[1]+1))
@@ -52,12 +56,17 @@ class VariableCalculation:
 
         return vp[:, 1:]
 
-    def get_index_nan(self, arr_price, arr_volume):
-        nan_price, nan_volume = np.isnan(arr_price), np.isnan(arr_volume)
-
-        return nan_price, nan_volume
-
     def get_log_vp(self, vp, duration=365):
+        """
+        Parameters
+        ----------
+        vp: time-series data of variance of price return with m variables and t-1 times
+        duration:
+
+        Returns
+        -------
+        rp: return of X with m variables and t-1 times
+        """
         log_mu, log_std = np.zeros((vp.shape[0], vp.shape[1]-duration)), np.zeros((vp.shape[0], vp.shape[1]-duration))
         stdp = np.sqrt(vp)
 
@@ -68,18 +77,45 @@ class VariableCalculation:
         return log_mu, log_std
 
     def get_disparity(self, X, alpha):
+        """
+        Parameters
+        ----------
+        X: time-series data of price with m variables and t times
+
+        Returns
+        -------
+        rp: return of X with m variables and t-1 times
+        """
         ewm_X = self.get_ewm_time_series(X, alpha)
         x_X = np.true_divide(X-ewm_X, ewm_X) * 100
 
         return x_X
 
     def get_weight_vv_long_short(self, score_vv):
+        """
+        Parameters
+        ----------
+        X: time-series data of price with m variables and t times
+
+        Returns
+        -------
+        rp: return of X with m variables and t-1 times
+        """
         alpha = 9*score_vv + 1
         l_l, l_s = 10 - alpha, alpha
 
         return l_l, l_s
 
     def get_minmax(self, X, thd, method='min'):
+        """
+        Parameters
+        ----------
+        X: time-series data of price with m variables and t times
+
+        Returns
+        -------
+        rp: return of X with m variables and t-1 times
+        """
         X = X.reshape((-1, 1))
         if method=="min":
             min_array = np.full(X.shape, thd)
