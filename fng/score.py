@@ -166,17 +166,13 @@ class scoreIndex(object):
         rp: return of X with m variables and t-1 times
         """
         score_c = np.zeros((self.X.shape[0], self.X.shape[1]-duration))
-        std_price_all = np.zeros((self.X.shape[0], self.X.shape[1]-duration))
-        std_volume_all = np.zeros((self.X.shape[0], self.X.shape[1] - duration))
 
         for i in range(self.X.shape[1]-duration):
             std_price = np.nanstd(self.X[:, i:i+duration], axis=1)/np.nanmean(self.X[:, i:i+duration])
             std_volume = np.nanstd(self.Y[:, i:i+duration], axis=1)/np.nanmean(self.Y[:, i:i+duration])
-            std_price_all[:, i] = np.nanstd(self.X[:, i:i+duration], axis=1)
-            std_volume_all[:, i] = np.nanstd(self.Y[:, i:i+duration], axis=1)
-            score_c[:, i] = (std_price * std_volume).T
+            score_c[:, i] = ((std_price + std_volume)/2).T
         score_c[score_c == 0] = 0.01
-        score_c_comp = 10 * np.log(score_c+2)
+        score_c_comp = 5+15/(np.exp(1/score_c-2)+1)
 
         return score_c_comp
 
