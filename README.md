@@ -3,10 +3,11 @@
 
 두나무 Datavalue 팀에서 만든 공포탐욕지수를 비교적 유동성이 적은 자산에 적용하기 위해 개선한 모델입니다.
 자세한 내용은 [다음 아티클](https://jaealways.tistory.com/100?category=977505)을 참고하시기 바랍니다.
-
+<br/>
 
 ## Requirements
 * python (version 3.8 이상)
+<br/>
 
 
 ## Example
@@ -15,6 +16,7 @@
 pip install git+https://github.com/jaealways/fear-and-greed.git
 ```
 터미널에서 위 코드를 실행해서 라이브러리를 다운받습니다.
+<br/>
 
 
 
@@ -40,6 +42,7 @@ axs[2].plot(score_fng[num, :])
 ![Figure_1](https://user-images.githubusercontent.com/71856506/197672082-cb628989-03ee-405d-a14e-8735b42fbc0d.png)
 
 이와 같이 가격, 거래량, 공포탐욕점수 시계열을 비교할 수 있습니다.
+<br/>
 
 
 
