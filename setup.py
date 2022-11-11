@@ -10,7 +10,7 @@ setuptools.setup(
     name="fear_n_greed",
     version="0.0.1",
     author="JAE-HYEONG LEE",
-    author_email="jhyj121000@gmail.com",
+    author_email="jaealways56@gmail.com",
     description="To get FEAR and GREED index with price and volume data.",
     # long_description=long_description,
     long_description_content_type="text/markdown",
