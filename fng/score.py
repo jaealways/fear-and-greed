@@ -18,11 +18,11 @@ class scoreIndex(object):
         """
         Parameters
         ----------
-        X: time-series data of price with m variables and t times
+        duration: time-series data of price with m variables and t times
 
         Returns
         -------
-        rp: return of X with m variables and t-1 times
+        score_volatility: return of X with m variables and t-1 times
         """
         rp = vc().get_return_time_series(self.X)
         vp = vc().get_variance_price(rp)
@@ -44,11 +44,13 @@ class scoreIndex(object):
         """
         Parameters
         ----------
-        X: time-series data of price with m variables and t times
+        dur_l: time-series data of price with m variables and t times
+        dur_s:
 
         Returns
         -------
-        rp: return of X with m variables and t-1 times
+        ewm_vlm_l: return of X with m variables and t-1 times
+        ewm_vlm_s: return of X with m variables and t-1 times
         """
         ewm_vlm_l = vc().get_ewm_time_series(X=self.Y, alpha=1-1/dur_l)
         ewm_vlm_s = vc().get_ewm_time_series(X=self.Y, alpha=1-1/dur_s)
@@ -59,11 +61,13 @@ class scoreIndex(object):
         """
         Parameters
         ----------
-        X: time-series data of price with m variables and t times
+        ewm_vlm_l: time-series data of price with m variables and t times
+        ewm_vlm_s: time-series data of price with m variables and t times
+
 
         Returns
         -------
-        rp: return of X with m variables and t-1 times
+        score_volume: return of X with m variables and t-1 times
         """
         ln_vlm_s = np.log(np.true_divide(self.Y[:, 1:], ewm_vlm_s[:, :-1]))
         ln_vlm_l = np.log(np.true_divide(self.Y[:, 1:], ewm_vlm_l[:, :-1]))
@@ -81,11 +85,12 @@ class scoreIndex(object):
         """
         Parameters
         ----------
-        X: time-series data of price with m variables and t times
+        score_volatility: time-series data of price with m variables and t times
+        score_volume:
 
         Returns
         -------
-        rp: return of X with m variables and t-1 times
+        score_vv: return of X with m variables and t-1 times
         """
         score_volume = score_volume[:, -score_volatility.shape[1]:]
         score_vv = np.zeros(score_volume.shape)
@@ -101,25 +106,33 @@ class scoreIndex(object):
         """
         Parameters
         ----------
-        X: time-series data of price with m variables and t times
+        score_vv: time-series data of price with m variables and t times
 
         Returns
         -------
-        rp: return of X with m variables and t-1 times
+        l_l: return of X with m variables and t-1 times
+        l_s: return of X with m variables and t-1 times
         """
         l_l, l_s = vc().get_weight_vv_long_short(score_vv)
 
         return l_l, l_s
 
-    def disparity(self, l_l, l_s, dur_s=7, dur_l=30):
+    def disparity(self, l_l, l_s, dur_l=30, dur_s=7):
         """
         Parameters
         ----------
-        X: time-series data of price with m variables and t times
+        l_l: time-series data of price with m variables and t times
+        l_s: time-series data of price with m variables and t times
+
+        dur_l: time-series data of price with m variables and t times
+        dur_s: time-series data of price with m variables and t times
+
 
         Returns
         -------
-        rp: return of X with m variables and t-1 times
+        x_l: return of X with m variables and t-1 times
+        x_s: return of X with m variables and t-1 times
+
         """
         x_l, x_s = vc().get_disparity(self.X, 1-1/dur_l), vc().get_disparity(self.X, 1-1/dur_s)
         x_l, x_s = x_l[:, -l_l.shape[1]:], x_s[:, -l_s.shape[1]:]
@@ -130,25 +143,36 @@ class scoreIndex(object):
         """
         Parameters
         ----------
-        X: time-series data of price with m variables and t times
+        x_l: return of X with m variables and t-1 times
+        x_s: return of X with m variables and t-1 times
+
+        l_l: return of X with m variables and t-1 times
+        l_s: return of X with m variables and t-1 times
+
+        c: return of X with m variables and t-1 times
+
 
         Returns
         -------
-        rp: return of X with m variables and t-1 times
+        score_momentum: return of X with m variables and t-1 times
         """
         score_momentum = c*(np.multiply(x_l, l_l)+np.multiply(x_s, l_s))/10
 
         return score_momentum
 
-    def ewm_score_momentum(self, score_momentum, dur_s=2, dur_l=7):
+    def ewm_score_momentum(self, score_momentum, dur_l=7, dur_s=2):
         """
         Parameters
         ----------
-        X: time-series data of price with m variables and t times
+        score_momentum: time-series data of price with m variables and t times
+
+        dur_l: return of X with m variables and t-1 times
+        dur_s: return of X with m variables and t-1 times
+
 
         Returns
         -------
-        rp: return of X with m variables and t-1 times
+        ewm_w: return of X with m variables and t-1 times
         """
         ewm_w_s, ewm_w_l = vc().get_ewm_time_series(score_momentum, 1-1/dur_s), vc().get_ewm_time_series(score_momentum, 1-1/dur_l)
         ewm_w = (ewm_w_s + ewm_w_l)/2
@@ -159,11 +183,11 @@ class scoreIndex(object):
         """
         Parameters
         ----------
-        X: time-series data of price with m variables and t times
+        duration: time-series data of price with m variables and t times
 
         Returns
         -------
-        rp: return of X with m variables and t-1 times
+        score_c_comp: return of X with m variables and t-1 times
         """
         score_c = np.zeros((self.X.shape[0], self.X.shape[1]-duration))
 
@@ -180,11 +204,11 @@ class scoreIndex(object):
         """
         Parameters
         ----------
-        X: time-series data of price with m variables and t times
+        ewm_w: time-series data of price with m variables and t times
 
         Returns
         -------
-        rp: return of X with m variables and t-1 times
+        beta_com: return of X with m variables and t-1 times
         """
         beta = 2 + np.absolute(ewm_w) - 4/(1+np.exp(np.absolute(-ewm_w)))
 
@@ -202,7 +226,8 @@ class scoreIndex(object):
         """
         Parameters
         ----------
-        X: time-series data of price with m variables and t times
+        score_momentum: time-series data of price with m variables and t times
+
 
         Returns
         -------
@@ -293,7 +318,9 @@ class scoreStock(object):
         """
         Parameters
         ----------
-        X: time-series data of price with m variables and t times
+        score_volatility: time-series data of price with m variables and t times
+        score_volume: time-series data of price with m variables and t times
+
 
         Returns
         -------
@@ -317,7 +344,7 @@ class scoreStock(object):
 
         Returns
         -------
-        rp: return of X with m variables and t-1 times
+        score_vv: return of X with m variables and t-1 times
         """
         l_l, l_s = vc().get_weight_vv_long_short(score_vv)
         return l_l, l_s
