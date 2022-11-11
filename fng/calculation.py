@@ -3,13 +3,15 @@ import numpy as np
 class VariableCalculation:
     def get_return_time_series(self, X):
         """
+        Get price return of X.
+
         Parameters
         ----------
         X: time-series data of price with m variables and t times
 
         Returns
         -------
-        rp: return of X with m variables and t-1 times
+        rp: price return of X with m variables and t-1 times
         """
         rp = np.true_divide(np.diff(X), X[:, 1:]) * 100
         rp[rp == 0] = 0.00000001
@@ -18,6 +20,8 @@ class VariableCalculation:
 
     def get_ewm_time_series(self, X, alpha):
         """
+        Get price return of exponential moving average with duration alpha.
+
         Parameters
         ----------
         X: time-series data of price with m variables and t times
@@ -38,6 +42,8 @@ class VariableCalculation:
 
     def get_variance_price(self, rp):
         """
+        Get variance of price return matrix rp.
+
         Parameters
         ----------
         rp: return of price X data of price with m variables and t-1 times
@@ -58,6 +64,8 @@ class VariableCalculation:
 
     def get_log_vp(self, vp, duration=365):
         """
+        Get log of vp.
+
         Parameters
         ----------
         vp: time-series data of variance of price return with m variables and t-1 times
@@ -65,7 +73,8 @@ class VariableCalculation:
 
         Returns
         -------
-        rp: return of X with m variables and t-1 times
+        log_mu: return of X with m variables and t-1 times
+        log_std: return of X with m variables and t-1 times
         """
         log_mu, log_std = np.zeros((vp.shape[0], vp.shape[1]-duration)), np.zeros((vp.shape[0], vp.shape[1]-duration))
         stdp = np.sqrt(vp)
@@ -78,13 +87,16 @@ class VariableCalculation:
 
     def get_disparity(self, X, alpha):
         """
+        Get disparity index of X with duration of alpha.
+
         Parameters
         ----------
         X: time-series data of price with m variables and t times
+        alpha:
 
         Returns
         -------
-        rp: return of X with m variables and t-1 times
+        x_X: return of X with m variables and t-1 times
         """
         ewm_X = self.get_ewm_time_series(X, alpha)
         x_X = np.true_divide(X-ewm_X, ewm_X) * 100
@@ -93,13 +105,16 @@ class VariableCalculation:
 
     def get_weight_vv_long_short(self, score_vv):
         """
+        Get
+
         Parameters
         ----------
-        X: time-series data of price with m variables and t times
+        score_vv: time-series data of price with m variables and t times
 
         Returns
         -------
-        rp: return of X with m variables and t-1 times
+        l_l: return of X with m variables and t-1 times
+        l_s: return of X with m variables and t-1 times
         """
         alpha = 9*score_vv + 1
         l_l, l_s = 10 - alpha, alpha
@@ -111,10 +126,13 @@ class VariableCalculation:
         Parameters
         ----------
         X: time-series data of price with m variables and t times
+        thd: threshold of number
+        method: time-series data of price with m variables and t times
+
 
         Returns
         -------
-        rp: return of X with m variables and t-1 times
+        array: return of X with m variables and t-1 times
         """
         X = X.reshape((-1, 1))
         if method=="min":
