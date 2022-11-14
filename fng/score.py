@@ -431,7 +431,7 @@ class scoreStock(object):
             std_price = np.nanstd(self.A[:, i:i+duration], axis=1)/np.nanmean(self.A[:, i:i+duration])
             std_volume = np.nanstd(self.Y[:, i:i+duration], axis=1)/np.nanmean(self.Y[:, i:i+duration])
             score_c[:, i] = ((std_price + std_volume)/2).T
-        score_c[score_c == 0] = 0.01
+        score_c[score_c <= 0] = 0.01
         score_c_comp = 5+15/(np.exp(1/score_c-2)+1)
 
         return score_c_comp
