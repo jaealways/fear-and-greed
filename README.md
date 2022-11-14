@@ -3,28 +3,28 @@
 
 두나무 Datavalue 팀에서 만든 공포탐욕지수를 비교적 유동성이 적은 자산에 적용하기 위해 개선한 모델입니다.
 자세한 내용은 [다음 아티클](https://jaealways.tistory.com/100?category=977505)을 참고하시기 바랍니다.
-<br/><br/>
+<br/><br/><br/>
 
 ## Requirements
 * python (version 3.8 이상)
-<br/><br/>
+<br/><br/><br/>
 
 
 ## Example
-<br/>
+<br/><br/>
 
 ```python
 pip install git+https://github.com/jaealways/fear-and-greed.git
 ```
-<br/>
+<br/><br/>
 터미널에서 위 코드를 실행해서 라이브러리를 다운받습니다.
 <br/><br/>
 
 
 ### Index 계산
-<br/>
+<br/><br/>
 코스피 같은 자본시장 지수의 공포탐욕지수를 사용할 때 계산합니다. 종가데이터와 거래량데이터를 입력으로 넣어줍니다. 기간은 365일을 권장합니다.
-<br/>
+<br/><br/>
 
 ```python
 from fng.score import Score, FearGreed
@@ -37,13 +37,13 @@ score_fng = FearGreed(score).compute_index(duration=365)
 <br/>
 x(가격데이터), y(거래량데이터)는 여러 개의 시계열데이터로 to_numpy 변환을 권장합니다. 이 때 column이 시간축이 되도록 합니다.
 
-<br/><br/>
+<br/><br/><br/>
 
 
 ### Stock 계산
-<br/>
+<br/><br/>
 개별 종목의 공포탐욕지수를 사용할 때 계산합니다. 종가데이터, 고가데이터, 저가데이터와 거래량데이터를 입력으로 넣어줍니다. 기간은 120일을 권장합니다.
-<br/>
+<br/><br/>
 
 ```python
 from fng.score import Score, FearGreed
@@ -53,7 +53,7 @@ score = scoreStock(a,b,c,y)
 score_fng = FearGreed(score).compute_stock(duration=120)
 ```
 
-<br/>
+<br/><br/>
 a(가격 종가 데이터), b(가격 고가 데이터), c(가격 저가 데이터), y(거래량데이터)는 여러 개의 시계열데이터로 to_numpy 변환을 권장합니다. 이 때 column이 시간축이 되도록 합니다.
 <br/><br/>
 
@@ -67,7 +67,7 @@ axs[1].plot(y[num, -score_fng.shape[1]:])
 axs[2].plot(score_fng[num, :])
 ```
 
-<br/>
+<br/><br/>
 
 ![Figure_1](https://user-images.githubusercontent.com/71856506/197672082-cb628989-03ee-405d-a14e-8735b42fbc0d.png)
 
