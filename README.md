@@ -49,7 +49,7 @@ score = scoreStock(a,b,c,y)
 score_fng = FearGreed(score).compute_stock(duration=120)
 ```
 <br/>
-x(가격데이터), y(거래량데이터)는 여러 개의 시계열데이터로 to_numpy 변환을 권장합니다. 이 때 column이 시간축이 되도록 합니다.
+a(가격 종가 데이터), b(가격 고가 데이터), c(가격 저가 데이터), y(거래량데이터)는 여러 개의 시계열데이터로 to_numpy 변환을 권장합니다. 이 때 column이 시간축이 되도록 합니다.
 <br/><br/>
 
 
@@ -63,6 +63,7 @@ axs[2].plot(score_fng[num, :])
 ```
 
 <br/>
+
 ![Figure_1](https://user-images.githubusercontent.com/71856506/197672082-cb628989-03ee-405d-a14e-8735b42fbc0d.png)
 
 이와 같이 가격, 거래량, 공포탐욕점수 시계열을 비교할 수 있습니다.
@@ -73,4 +74,5 @@ axs[2].plot(score_fng[num, :])
 
 ## Reference
 <br/>
+
 [디지털자산 공포-탐욕 지수 Methodology Book version 2.0](https://datavalue.dunamu.com/static/pdf/%EB%91%90%EB%82%98%EB%AC%B4%20%EB%94%94%EC%A7%80%ED%84%B8%EC%9E%90%EC%82%B0%20%EA%B3%B5%ED%8F%AC-%ED%83%90%EC%9A%95%20%EC%A7%80%EC%88%98%20Methodology%20Book%202.0.pdf)
