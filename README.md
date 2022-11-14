@@ -21,19 +21,37 @@ pip install git+https://github.com/jaealways/fear-and-greed.git
 <br/><br/>
 
 
+### Index 계산
+<br/>
 
 ```python
 from fng.score import Score, FearGreed
 
 x, y = df_price.to_numpy(), df_price_volume.to_numpy()
 score = scoreIndex(x, y)
-score_fng = FearGreed(score).compute_index(duration=duration)
+score_fng = FearGreed(score).compute_index(duration=365)
 ```
 
 <br/>
 x(가격데이터), y(거래량데이터)는 여러 개의 시계열데이터로 to_numpy 변환을 권장합니다. 이 때 column이 시간축이 되도록 합니다.
 
 <br/><br/>
+
+
+### Stock 계산
+<br/>
+
+```python
+from fng.score import Score, FearGreed
+
+a, b, c, y = df_price.to_numpy(), df_price_high.to_numpy(), df_price_low.to_numpy(), df_price_volume.to_numpy()
+score = scoreStock(a,b,c,y)
+score_fng = FearGreed(score).compute_stock(duration=120)
+```
+<br/>
+x(가격데이터), y(거래량데이터)는 여러 개의 시계열데이터로 to_numpy 변환을 권장합니다. 이 때 column이 시간축이 되도록 합니다.
+<br/><br/>
+
 
 ```python
 import matplotlib.pyplot as plt
