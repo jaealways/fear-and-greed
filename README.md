@@ -27,7 +27,7 @@ pip install git+https://github.com/jaealways/fear-and-greed.git
 <br/><br/>
 
 ```python
-from fng.score import Score, FearGreed
+from fng.score import scoreIndex, FearGreed
 
 x, y = df_price.to_numpy(), df_price_volume.to_numpy()
 score = scoreIndex(x, y)
@@ -46,7 +46,7 @@ x(가격데이터), y(거래량데이터)는 여러 개의 시계열데이터로
 <br/><br/>
 
 ```python
-from fng.score import Score, FearGreed
+from fng.score import scoreStock, FearGreed
 
 a, b, c, y = df_price.to_numpy(), df_price_high.to_numpy(), df_price_low.to_numpy(), df_price_volume.to_numpy()
 score = scoreStock(a,b,c,y)
