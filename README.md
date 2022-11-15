@@ -23,11 +23,11 @@ pip install git+https://github.com/jaealways/fear-and-greed.git
 
 ### Index 계산
 <br/><br/>
-코스피 같은 자본시장 지수의 공포탐욕지수를 사용할 때 계산합니다. 종가데이터와 거래량데이터를 입력으로 넣어줍니다. 기간은 365일을 권장합니다.
+코스피 같은 자본시장 지수의 공포탐욕지수를 계산할 때 사용합니다. 종가데이터와 거래량데이터를 입력으로 넣어줍니다. 기간은 365일을 권장합니다.
 <br/><br/>
 
 ```python
-from fng.score import Score, FearGreed
+from fng.score import scoreIndex, FearGreed
 
 x, y = df_price.to_numpy(), df_price_volume.to_numpy()
 score = scoreIndex(x, y)
@@ -42,11 +42,11 @@ x(가격데이터), y(거래량데이터)는 여러 개의 시계열데이터로
 
 ### Stock 계산
 <br/><br/>
-개별 종목의 공포탐욕지수를 사용할 때 계산합니다. 종가데이터, 고가데이터, 저가데이터와 거래량데이터를 입력으로 넣어줍니다. 기간은 120일을 권장합니다.
+개별 종목의 공포탐욕지수를 할 때 사용합니다. 종가데이터, 고가데이터, 저가데이터와 거래량데이터를 입력으로 넣어줍니다. 기간은 120일을 권장합니다.
 <br/><br/>
 
 ```python
-from fng.score import Score, FearGreed
+from fng.score import scoreStock, FearGreed
 
 a, b, c, y = df_price.to_numpy(), df_price_high.to_numpy(), df_price_low.to_numpy(), df_price_volume.to_numpy()
 score = scoreStock(a,b,c,y)
