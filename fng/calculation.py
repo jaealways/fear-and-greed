@@ -1,6 +1,7 @@
 import numpy as np
 
 class VariableCalculation:
+    # to convert numpy to tensorflow
     def get_return_time_series(self, X):
         """
         Get price return of X.
