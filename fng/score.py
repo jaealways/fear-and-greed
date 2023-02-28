@@ -2,6 +2,9 @@ import numpy as np
 
 from .calculation import VariableCalculation as vc
 
+# Index 부분이랑 Stock 부분 코드 재사용성 고민.
+# 겹치지 않는 지표는 merge
+
 
 class scoreIndex(object):
     def __init__(self, P, V):
@@ -40,22 +43,7 @@ class scoreIndex(object):
 
         return score_volatility
 
-    def ewm_volume(self, dur_l=60, dur_s=20):
-        """
-        Parameters
-        ----------
-        dur_l: time-series data of price with m variables and t times
-        dur_s:
 
-        Returns
-        -------
-        ewm_vlm_l: return of P with m variables and t-1 times
-        ewm_vlm_s: return of P with m variables and t-1 times
-        """
-        ewm_vlm_l = vc().get_ewm_time_series(X=self.V, alpha=1-1/dur_l)
-        ewm_vlm_s = vc().get_ewm_time_series(X=self.V, alpha=1-1/dur_s)
-
-        return ewm_vlm_l, ewm_vlm_s
 
     def volume_score(self, ewm_vlm_l, ewm_vlm_s):
         """
@@ -160,25 +148,6 @@ class scoreIndex(object):
 
         return score_momentum
 
-    def ewm_score_momentum(self, score_momentum, dur_l=7, dur_s=2):
-        """
-        Parameters
-        ----------
-        score_momentum: time-series data of price with m variables and t times
-
-        dur_l: return of P with m variables and t-1 times
-        dur_s: return of P with m variables and t-1 times
-
-
-        Returns
-        -------
-        ewm_w: return of P with m variables and t-1 times
-        """
-        ewm_w_s, ewm_w_l = vc().get_ewm_time_series(score_momentum, 1-1/dur_s), vc().get_ewm_time_series(score_momentum, 1-1/dur_l)
-        ewm_w = (ewm_w_s + ewm_w_l)/2
-
-        return ewm_w
-
     def score_c(self, duration):
         """
         Parameters
@@ -224,12 +193,13 @@ class scoreIndex(object):
 
     def score_compensation(self, score_momentum, score_vv, beta_com):
         """
+        Calculate score Volatility & Volume with compensated.
+
         Parameters
         ----------
         score_momentum: time-series data of price with m variables and t times
         score_vv:
         beta_com:
-
 
         Returns
         -------
@@ -279,22 +249,6 @@ class scoreStock(object):
             score_volatility[:, idx] = vc().get_minmax(array_max, 4, "min")
 
         return score_volatility
-
-    def ewm_volume(self, dur_l=60, dur_s=20):
-        """
-        Parameters
-        ----------
-        dur_l: time-series data of price with m variables and t times
-        dur_s:
-
-        Returns
-        -------
-        ewm_vlm_l: return of P with m variables and t-1 times
-        ewm_vlm_s:
-        """
-        ewm_vlm_l = vc().get_ewm_time_series(X=self.V, alpha=1-1/dur_l)
-        ewm_vlm_s = vc().get_ewm_time_series(X=self.V, alpha=1-1/dur_s)
-        return ewm_vlm_l, ewm_vlm_s
 
     def volume_score(self, ewm_vlm_l, ewm_vlm_s):
         """
@@ -360,7 +314,7 @@ class scoreStock(object):
         Parameters
         ----------
         l_l: time-series data of price with m variables and t times
-        l_s:
+        l_s: time-series data of
         dur_s:
         dur_l:
 
@@ -376,13 +330,15 @@ class scoreStock(object):
 
     def score_momentum(self, x_l, x_s, l_l, l_s, c=15):
         """
+        Calculate Momentum score.
+
         Parameters
         ----------
         x_l: time-series data of price with m variables and t times
         x_s:
         l_l:
         l_s:
-        c:
+        c: parameter of
 
         Returns
         -------
@@ -392,22 +348,7 @@ class scoreStock(object):
 
         return score_momentum
 
-    def ewm_score_momentum(self, score_momentum, dur_s=2, dur_l=7):
-        """
-        Parameters
-        ----------
-        score_momentum: time-series data of price with m variables and t times
-        dur_s:
-        dur_l:
 
-        Returns
-        -------
-        ewm_w: return of P with m variables and t-1 times
-        """
-        ewm_w_s, ewm_w_l = vc().get_ewm_time_series(score_momentum, 1-1/dur_s), vc().get_ewm_time_series(score_momentum, 1-1/dur_l)
-        ewm_w = (ewm_w_s + ewm_w_l)/2
-
-        return ewm_w
 
     def beta_compensated(self, ewm_w):
         """
@@ -486,7 +427,7 @@ class FearGreed(object):
         score_compensation: return of P with m variables and t-1 times
         """
         score_volatility = self.score.volatility_score(duration=duration)
-        ewm_vlm_l, ewm_vlm_s = self.score.ewm_volume()
+        ewm_vlm_l, ewm_vlm_s = vc().get_ewm_volume()
         score_volume = self.score.volume_score(ewm_vlm_l, ewm_vlm_s)
         score_vv = self.score.volatility_volume_score(score_volatility, score_volume)
 
@@ -496,7 +437,7 @@ class FearGreed(object):
         score_c = self.score.score_c(duration=duration)
 
         score_momentum = self.score.score_momentum(x_l, x_s, l_l, l_s, c=score_c[:, 1:])
-        ewm_w = self.score.ewm_score_momentum(score_momentum)
+        ewm_w = vc().get_ewm_score_momentum(score_momentum)
         beta_com = self.score.beta_compensated(ewm_w)
         score_compensation = self.score.score_compensation(score_momentum, score_vv, beta_com)
 
@@ -513,7 +454,7 @@ class FearGreed(object):
         score_compensation: return of P with m variables and t-1 times
         """
         score_volatility = self.score.volatility_score(duration=duration)
-        ewm_vlm_l, ewm_vlm_s = self.score.ewm_volume()
+        ewm_vlm_l, ewm_vlm_s = vc().get_ewm_volume()
         score_volume = self.score.volume_score(ewm_vlm_l, ewm_vlm_s)
         score_vv = self.score.volatility_volume_score(score_volatility, score_volume)
 
@@ -523,7 +464,7 @@ class FearGreed(object):
         score_c = self.score.score_c(duration=duration)
 
         score_momentum = self.score.score_momentum(x_l, x_s, l_l, l_s, c=score_c[:, 1:])
-        ewm_w = self.score.ewm_score_momentum(score_momentum)
+        ewm_w = vc().get_ewm_score_momentum(score_momentum)
         beta_com = self.score.beta_compensated(ewm_w)
         score_compensation = self.score.score_compensation(score_momentum, score_vv, beta_com)
 
