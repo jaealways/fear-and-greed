@@ -3,6 +3,7 @@ import numpy as np
 from .calculation import VariableCalculation as vc
 
 # Index 부분이랑 Stock 부분 코드 재사용성 고민.
+# 통합 code 작성
 # 겹치지 않는 지표는 merge
 
 
