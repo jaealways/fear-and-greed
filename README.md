@@ -48,13 +48,13 @@ x(가격데이터), y(거래량데이터)는 여러 개의 시계열데이터로
 ```python
 from fng.score import scoreStock, FearGreed
 
-a, b, c, y = df_price.to_numpy(), df_price_high.to_numpy(), df_price_low.to_numpy(), df_price_volume.to_numpy()
-score = scoreStock(a,b,c,y)
+p, h, l, v = df_price.to_numpy(), df_price_high.to_numpy(), df_price_low.to_numpy(), df_price_volume.to_numpy()
+score = scoreStock(p,h,l,v)
 score_fng = FearGreed(score).compute_stock(duration=120)
 ```
 
 <br/><br/>
-P(가격 종가 데이터), H(가격 고가 데이터), L(가격 저가 데이터), V(거래량데이터)는 여러 개의 시계열데이터로 to_numpy 변환을 권장합니다. 이 때 column이 시간축이 되도록 합니다.
+p(가격 종가 데이터), h(가격 고가 데이터), l(가격 저가 데이터), v(거래량데이터)는 여러 개의 시계열데이터로 to_numpy 변환을 권장합니다. 이 때 column이 시간축이 되도록 합니다.
 <br/><br/>
 
 
@@ -62,8 +62,8 @@ P(가격 종가 데이터), H(가격 고가 데이터), L(가격 저가 데이�
 import matplotlib.pyplot as plt
 
 fig, axs = plt.subplots(3)
-axs[0].plot(x[num, -score_fng.shape[1]:])
-axs[1].plot(y[num, -score_fng.shape[1]:])
+axs[0].plot(p[num, -score_fng.shape[1]:])
+axs[1].plot(v[num, -score_fng.shape[1]:])
 axs[2].plot(score_fng[num, :])
 ```
 
